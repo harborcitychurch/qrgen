@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f5f5f500;
+            color: #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        html {
+        /* orange background gradient */
+            background: linear-gradient(135deg, #00a2ff, #380b9f);
+            height: 100%;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #3f51b5;
+        }
+        .qr-container {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 24px 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(63,81,181,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type="text"], input[type="color"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+        input[type="color"] {
+            height: 56px;
+            min-height: 56px;
+            cursor: pointer;
+        }
+        .protocol-row {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .protocol-row select {
+            flex: 0 0 110px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background: #fafafa;
+        }
+        .protocol-row input[type="text"] {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .color-label {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+            color: #3f51b5;
+        }
+        .color-row {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .color-row > div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .show-link-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+        .show-link-row label {
+            font-size: 0.98rem;
+            color: #3f51b5;
+            cursor: pointer;
+        }
+        button {
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 12px;
+        }
+        button:hover {
+            background-color: #303f9f;
+        }
+        #qrCanvas {
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            height: 200px;
+        }
+        .qr-link-text {
+            margin-top: 10px;
+            color: #3f51b5;
+            word-break: break-all;
+            font-size: 1rem;
+        }
+        .downloadLink {
+            display: inline-block;
+            margin-top: 10px;
+            text-decoration: none;
+            color: #3f51b5;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        .downloadLink:hover {
+            color: #303f9f;
+        }
+        footer {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-container">
+        <h1>QR Code Generator</h1>
+        <div class="protocol-row">
+            <select id="protocolSelect">
+                <option value="https://">https://</option>
+                <option value="http://">http://</option>
+            </select>
+            <input type="text" id="urlInput" placeholder="Enter URL (without protocol)">
+        </div>
+        <div class="color-row">
+            <div>
+                <label class="color-label" for="fgColor">QR Dark Color</label>
+                <input type="color" id="fgColor" value="#000000">
+            </div>
+            <div>
+                <label class="color-label" for="bgColor">QR Light Color</label>
+                <input type="color" id="bgColor" value="#ffffff">
+            </div>
+        </div>
+        <div class="show-link-row">
+            <input type="checkbox" id="showLinkText" style="display:none" checked>
+            <label for="showLinkText" style="display:none">Show link text under QR code</label>
+        </div>
+        <button onclick="generateQRCode()">Generate QR Code</button>
+        <canvas id="qrCanvas"></canvas>
+        <div id="qrLinkText" class="qr-link-text"></div>
+        <a class="downloadLink" id="testlink" style="display: none;">Test QR Code Link</a>
+        <a class="downloadLink" id="downloadLink" style="display: none;">Download QR Code</a>
+    </div>
+    <script>
+        function sanitizeFilename(url) {
+            // Remove protocol, replace non-alphanum with underscores, trim, and limit length
+            return url
+                .replace(/^(https?:\/\/)/i, '')
+                .replace(/[^a-z0-9]/gi, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_+|_+$/g, '')
+                .substring(0, 64) || 'qrcode';
+        }
+
+        function generateQRCode() {
+            const protocol = document.getElementById('protocolSelect').value;
+            let urlValue = document.getElementById('urlInput').value.trim();
+            const fgColor = document.getElementById('fgColor').value;
+            const bgColor = document.getElementById('bgColor').value;
+            const canvas = document.getElementById('qrCanvas');
+            const testLink = document.getElementById('testlink');
+            const downloadLink = document.getElementById('downloadLink');
+            const qrLinkText = document.getElementById('qrLinkText');
+
+            // Remove any existing protocol from input
+            urlValue = urlValue.replace(/^(https?:\/\/)/i, '');
+
+            const fullUrl = protocol + urlValue;
+
+            if (!urlValue) {
+                alert('Please enter a URL');
+                qrLinkText.textContent = '';
+                return;
+            }
+
+            testLink.href = fullUrl;
+            testLink.style.display = 'inline-block';
+            testLink.textContent = 'Test QR Code Link';
+            testLink.target = '_blank';
+
+            // Generate QR code to a temporary canvas
+            const qrSize = 200;
+            const tempCanvas = document.createElement('canvas');
+            QRCode.toCanvas(tempCanvas, fullUrl, {
+                width: qrSize,
+                color: {
+                    dark: fgColor,
+                    light: bgColor
+                }
+            }, function (error) {
+                if (error) {
+                    console.error(error);
+                    alert('Failed to generate QR Code');
+                    qrLinkText.textContent = '';
+                    return;
+                }
+
+                let fontSize = 14;
+                let padding = 10;
+                let textHeight = 0;
+                let text = fullUrl;
+                let canvasWidth = qrSize;
+                let canvasHeight = qrSize;
+
+                // Always show link text under the QR code (not on canvas)
+                // Only draw QR code on canvas
+                canvas.width = qrSize;
+                canvas.height = qrSize;
+
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.drawImage(tempCanvas, 0, 0, qrSize, qrSize);
+
+                // Prepare download link with sanitized filename
+                const filename = sanitizeFilename(fullUrl) + '.png';
+                canvas.toBlob(function (blob) {
+                    const url = URL.createObjectURL(blob);
+                    downloadLink.href = url;
+                    downloadLink.download = filename;
+                    downloadLink.style.display = 'inline-block';
+                    downloadLink.textContent = 'Download QR Code';
+                });
+            });
+
+            // Always show the link text under the QR code
+            qrLinkText.textContent = fullUrl;
+            qrLinkText.style.display = 'block';
+        }
+
+        // Always show the link text under the QR code
+        document.addEventListener('DOMContentLoaded', function() {
+            const qrLinkText = document.getElementById('qrLinkText');
+            qrLinkText.style.display = 'block';
+        });
+    </script>
+    <footer>
+        <p>&copy; 2025 Harbor City Church</p>
+    </footer>
+</body>
+</html>
