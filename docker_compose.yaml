@@ -5,6 +5,3 @@ services:
     image: nginx:latest
     volumes:
       - ./index.html:/usr/share/nginx/html/index.html
-    environment:
-      - VIRTUAL_HOST=qr.hcc
-
