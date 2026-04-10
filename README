@@ -4,7 +4,7 @@ Small static web app for generating QR codes from URLs. The interface lets you c
 
 ## Overview
 
-This project consists of a single HTML page with embedded CSS and JavaScript. QR generation is handled in the browser using the `qrcode` library loaded from a CDN. The repository also includes a minimal nginx-based Docker Compose setup for serving the page locally or behind a reverse proxy.
+This project consists of a single HTML page with embedded CSS and JavaScript. QR generation is handled in the browser using the `qrcode` library loaded from a CDN. The repository also includes a minimal httpd-based Docker Compose setup for serving the page locally or behind a reverse proxy.
 
 ## Features
 
@@ -21,7 +21,7 @@ This project consists of a single HTML page with embedded CSS and JavaScript. QR
 You only need one of the following:
 
 - A modern web browser, if you want to open the page directly
-- Docker and Docker Compose, if you want to serve it with nginx
+- Docker and Docker Compose, if you want to serve it with httpd
 
 ## Run Locally
 
@@ -49,7 +49,7 @@ Then open `http://localhost:8080` in your browser.
 
 ## Run With Docker Compose
 
-The repository includes an nginx service that mounts `index.html` into the default nginx web root.
+The repository includes an httpd service that mounts `index.html` into the default apache web root.
 
 ### Start the app
 cd into the directory of the project and run the following command
@@ -65,8 +65,8 @@ docker-compose down
 
 ### Default container behavior
 
-- Uses the latest nginx image
-- Serves `index.html` from `/usr/share/nginx/html/index.html`
+- Uses the latest httpd image
+- Serves `index.html` from `/usr/share/httpd/html/index.html`
 - You can create a `docker_compose.override.yml` file to expose port 80 or change settings specific to your environment
 
 ## How It Works

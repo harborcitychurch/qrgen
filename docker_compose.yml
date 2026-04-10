@@ -1,9 +1,7 @@
 version: '3.8'
 
 services:
-  nginx:
-    image: nginx:latest
+  httpd:
+    image: httpd:latest
     volumes:
-      - ./index.html:/usr/share/nginx/html/index.html
-    
-
+      - ./index.html:/usr/local/apache2/htdocs/index.html
